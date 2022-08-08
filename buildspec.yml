@@ -1,16 +1,24 @@
 version: 0.2
 
- 
-
 phases:
+  install:
+    runtime-versions:
+      java: openjdk8
+      docker: 20
+  pre_build:
+    commands:
+      - echo "Pre_build"
+      - echo "Logging in to Amazon ECR"
+      - $(aws ecr get-login --region ap-south-1 --no-include-email)
+      - REPOSITORY_URI=249113955330.dkr.ecr.ap-south-1.amazonaws.com/
+      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
   build:
     commands:
-    - echo Entered the build phase..
-    - mvn clean install
-  post_build:
-    commands:
-    - echo Build completed
-artifacts:
-  files:
-    - target/*.jar
-  discard-paths: yes
+      - echo "Build"
+      - echo "Entered build phase"
+      - echo "Building Java"      
+      - mvn clean install
+      - docker build -t spring-sample-application-mani .
+      - docker tag spring-sample-application-mani:latest $REPOSITORY_URI:$IMAGE_TAG
+
+  
